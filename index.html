@@ -1,0 +1,104 @@
+<head>
+    <title>Over-3 Volume Chart V50</title>
+</head>
+
+<body>
+    <div id="chartContainer" style="height:100%; width: 100%;"></div>
+    <script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+    <script>
+        var symbol = "R_50";
+        var decimals = 4;
+        var ws = new WebSocket('wss://ws.binaryws.com/websockets/v3?app_id=1089');
+
+        ws.onopen = function (evt) {
+            ws.send(JSON.stringify({ ticks: symbol }));
+        };
+
+
+        var dps = [];
+        var dataLength = 60;
+        var chart = new CanvasJS.Chart("chartContainer", {
+            theme: "light1", // "light1", "light2", "dark1", "dark2"
+            animationEnabled: true,
+            data: [{
+                type: "line",
+                dataPoints: dps
+            }],
+            axisY: {
+                gridDashType: "dot",
+                gridThickness: 1,
+                labelFontSize: 10
+            },
+            axisX: {
+                gridDashType: "dot",
+                gridThickness: 0,
+                labelFontSize: 10
+            }
+        });
+
+
+        var xval = 1;
+        var yval = 1;
+
+        function drawOverUnder(yv, dg, color) {
+            if (dg>3) {
+                yval += yv;
+            } else {
+                yval -= yv;
+            }
+
+            dps.push({
+                x: xval,
+                y: yval,
+                indexLabel: dg,
+                indexLabelFontWeight: "bold",
+                indexLabelFontSize: 14,
+                indexLabelFontColor: color,
+                markerSize: 8,
+                markerType: "circle",
+                markerColor: color,
+                // lineColor: "green",
+            });
+            xval += 1;
+
+            if (dps.length > dataLength) {
+                dps.shift();
+            }
+            chart.render();
+        }
+
+        ws.onmessage = function (msg) {
+            var data = JSON.parse(msg.data);
+            var digit = Number(data.tick.quote).toFixed(decimals).slice(-1);
+            // console.log(digit);
+
+            if (digit > 3) {
+                if (digit == 4) {
+                    drawOverUnder(1, digit, "#008c20");
+                } else if (digit == 5) {
+                    drawOverUnder(2, digit, "#008c20");
+                } else if (digit == 6) {
+                    drawOverUnder(3, digit, "#008c20");
+                } else if (digit == 7) {
+                    drawOverUnder(4, digit, "#008c20");
+                } else if (digit == 8) {
+                    drawOverUnder(5, digit, "#008c20");
+                }
+                else if (digit == 9) {
+                    drawOverUnder(6, digit, "#008c20");
+                }
+            } else {
+                if (digit == 0) {
+                    drawOverUnder(1, digit, "red");
+                } else if (digit == 1) {
+                    drawOverUnder(2, digit, "red");
+                } else if (digit == 2) {
+                    drawOverUnder(3, digit, "red");
+                } else if (digit == 3) {
+                    drawOverUnder(4, digit, "red");
+                }
+
+            }
+        }
+    </script>
+</body>
